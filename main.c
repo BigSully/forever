@@ -54,9 +54,9 @@ int main(int argc, char *argv[], char *envp[]) {
                 chdir(cwd);
             }
             char **args=&argv[1];  // start from the second parameter
-            execve(args[0], args, envp);
+            execve(args[0], args, envp);  // exec binary with arguments and environment variables in child process
             int errsv = errno;
-            fprintf(stderr, "failed to execute, error no: \"%d\"\n", errsv);
+            fprintf(stderr, "failed to execute, error no: %d \n", errsv);
             exit(1); // break loop in the monitored process in case it forks itself
         }else{ //parent
             printf("start monitoring %d\n", pid);
