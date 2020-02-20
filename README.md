@@ -1,5 +1,4 @@
-
-
+Monitor a program and resume it when it dies. It only works on mac.
 
 Build:<br/>
 cc main.c -framework CoreFoundation -O -o forever
