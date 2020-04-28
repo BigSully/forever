@@ -1,40 +1,13 @@
-// https://developer.apple.com/documentation/corefoundation/cffiledescriptor-ru3#2556086
-// cc test.c -framework CoreFoundation -O
-#include <CoreFoundation/CoreFoundation.h>
+// https://linux.die.net/man/2/waitpid
+// cc main.c -O -o forever
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/event.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-
-#define FOREVER ((CFTimeInterval) 1e20)
-
-static void noteProcDeath(CFFileDescriptorRef fdref, CFOptionFlags callBackTypes, void *info) {
-    struct kevent kev;
-    int fd = CFFileDescriptorGetNativeDescriptor(fdref);
-    kevent(fd, NULL, 0, &kev, 1, NULL);
-    // take action on death of process here
-    printf("process with pid '%u' died\n", (unsigned int)kev.ident);
-    CFFileDescriptorInvalidate(fdref);
-    CFRelease(fdref); // the CFFileDescriptorRef is no longer of any use in this example
-}
-
-static void monitor(int pid){
-    int fd = kqueue();
-    struct kevent kev;
-    EV_SET(&kev, pid, EVFILT_PROC, EV_ADD|EV_ENABLE, NOTE_EXIT, 0, NULL);
-    kevent(fd, &kev, 1, NULL, 0, NULL);
-    CFFileDescriptorRef fdref = CFFileDescriptorCreate(kCFAllocatorDefault, fd, true, noteProcDeath, NULL);
-    CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
-    CFRunLoopSourceRef source = CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault, fdref, 0);
-    CFRunLoopAddSource(CFRunLoopGetMain(), source, kCFRunLoopDefaultMode);
-    CFRelease(source);
-    // run the run loop forever seconds
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, FOREVER, true);
-}
-
 
 int main(int argc, char *argv[], char *envp[]) {
     if (argc < 2) exit(1);
@@ -43,12 +16,14 @@ int main(int argc, char *argv[], char *envp[]) {
     setsid();
     signal (SIGHUP, SIG_IGN);
 
-    for(;;){
+    int status;
+
+    do{
         time_t forkTime=time(NULL);
 
         pid_t pid = -1;
         if ( 0 == (pid = fork()) ) {  //child
-            printf("child pid: %d, spawning...\n", getpid());
+            fprintf(stderr, "child pid: %d, spawning...\n", getpid());
             char *cwd = getenv("CWD");
             if(cwd != NULL && strlen(cwd) > 0) {
                 chdir(cwd);
@@ -59,9 +34,16 @@ int main(int argc, char *argv[], char *envp[]) {
             fprintf(stderr, "failed to execute, error no: %d \n", errsv);
             exit(1); // break loop in the monitored process in case it forks itself
         }else{ //parent
-            printf("start monitoring %d\n", pid);
-            monitor(pid);  // block the main thread
-            printf("child exit %d\n", pid);
+            fprintf(stderr, "start monitoring %d\n", pid);
+            pid_t w = waitpid(pid, &status, WUNTRACED);   // block the main thread
+
+            if (WIFEXITED(status)) {
+                fprintf(stderr, "exited, status=%d\n", WEXITSTATUS(status));
+            } else if (WIFSIGNALED(status)) {
+                fprintf(stderr, "killed by signal %d\n", WTERMSIG(status));
+            } else if (WIFSTOPPED(status)) {
+                fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(status));
+            }
             time_t now=time(NULL);
             if( 180 > (now - forkTime) ){  // If the child process keep exit within 180 seconds, stop resume it anymore.
                 fprintf(stderr, "abnormally resume, please check manually.\n");
@@ -69,7 +51,7 @@ int main(int argc, char *argv[], char *envp[]) {
             }
 
         }
-    }
+    }while ( !WIFEXITED(status) );  // exit normally
 
     return 0;
 }
