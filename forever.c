@@ -1,5 +1,5 @@
 // https://linux.die.net/man/2/waitpid
-// cc main.c -O -o forever
+// cc forever.c -O -o forever
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>

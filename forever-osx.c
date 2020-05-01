@@ -1,5 +1,5 @@
 // https://developer.apple.com/documentation/corefoundation/cffiledescriptor-ru3#2556086
-// cc test.c -framework CoreFoundation -O
+// cc forever-osx.c -framework CoreFoundation -O
 #include <CoreFoundation/CoreFoundation.h>
 #include <unistd.h>
 #include <sys/event.h>
