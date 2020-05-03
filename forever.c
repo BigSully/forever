@@ -17,7 +17,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
     int status;
 
-    do{
+    for(;;){
         time_t forkTime=time(NULL);
 
         pid_t pid = -1;
@@ -50,8 +50,7 @@ int main(int argc, char *argv[], char *envp[]) {
             }
 
         }
-    }while ( !WIFEXITED(status) );  // exit normally
+    }
 
-    return 0;
 }
 
