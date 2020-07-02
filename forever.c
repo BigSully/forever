@@ -44,7 +44,7 @@ int main(int argc, char *argv[], char *envp[]) {
                 fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(status));
             }
             time_t now=time(NULL);
-            if( 180 > (now - forkTime) ){  // If the child process keep exit within 180 seconds, stop resume it anymore.
+            if( 180 > (now - forkTime) ){  // If the child process keeps exiting within 180 seconds, stop to resume it anymore.
                 fprintf(stderr, "abnormally resume, please check manually.\n");
                 exit(1);
             }
