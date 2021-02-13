@@ -9,7 +9,10 @@
 #include <time.h>
 
 int main(int argc, char *argv[], char *envp[]) {
-    if (argc < 2) exit(1);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s /usr/bin/other_executables [options]\n", argv[0]);
+        exit(1);
+    }
 
     // detach from the terminal parent
     setsid();
