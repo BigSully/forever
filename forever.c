@@ -23,8 +23,13 @@ int main(int argc, char *argv[], char *envp[]) {
     for(;;){
         time_t forkTime=time(NULL);
 
-        pid_t pid = -1;
-        if ( 0 == (pid = fork()) ) {  //child
+        pid_t pid = fork();
+        if( 0 > pid ){ // failure of fork
+            int errsv = errno;
+            fprintf(stderr, "failed to fork, error no: %d \n", errsv);
+            exit(1);
+        }
+        if ( 0 == pid ) {  //child
             fprintf(stderr, "child pid: %d, spawning...\n", getpid());
             char *cwd = getenv("CWD");
             if(cwd != NULL && strlen(cwd) > 0) {
